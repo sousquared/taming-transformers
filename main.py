@@ -524,11 +524,7 @@ if __name__ == "__main__":
 
         # data
         data = instantiate_from_config(config.data)
-        # NOTE according to https://pytorch-lightning.readthedocs.io/en/latest/datamodules.html
-        # calling these ourselves should not be necessary but it is.
-        # lightning still takes care of proper multiprocessing though
-        data.prepare_data()
-        data.setup()
+        train_data_loader, val_data_loader = data.prepare_data_loaders()
 
         # configure learning rate
         bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
@@ -562,12 +558,12 @@ if __name__ == "__main__":
         # run
         if opt.train:
             try:
-                trainer.fit(model, data)
+                trainer.fit(model, train_data_loader)
             except Exception:
                 melk()
                 raise
         if not opt.no_test and not trainer.interrupted:
-            trainer.test(model, data)
+            trainer.test(model, val_data_loader)
     except Exception:
         if opt.debug and trainer.global_rank==0:
             try:
